@@ -1,2 +1,4 @@
 # langchain-for-learning
-翻译 langchain官方文档
+
+就简简单单的翻译翻译翻译 langchain官方文档
+
