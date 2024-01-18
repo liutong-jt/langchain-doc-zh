@@ -10,8 +10,6 @@ from langchain_community.document_loaders import TextLoader
 loader = TextLoader("../../state_of_the_union.txt")
 ```
 
-
-
 ```python
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -24,19 +22,13 @@ embeddings = OpenAIEmbeddings()
 db = FAISS.from_documents(texts, embeddings)
 ```
 
-
-
 ```python
 retriever = db.as_retriever()
 ```
 
-
-
 ```python
 docs = retriever.get_relevant_documents("what did he say about ketanji brown jackson")
 ```
-
-
 
 ## 最大边际相关性检索 
 
@@ -45,8 +37,6 @@ docs = retriever.get_relevant_documents("what did he say about ketanji brown jac
 ```python
 retriever = db.as_retriever(search_type="mmr")
 ```
-
-
 
 ```python
 docs = retriever.get_relevant_documents("what did he say about ketanji brown jackson")
@@ -64,8 +54,6 @@ retriever = db.as_retriever(
 )
 ```
 
-
-
 ```python
 docs = retriever.get_relevant_documents("what did he say about ketanji brown jackson")
 ```
@@ -80,14 +68,10 @@ docs = retriever.get_relevant_documents("what did he say about ketanji brown jac
 retriever = db.as_retriever(search_kwargs={"k": 1})
 ```
 
-
-
 ```python
 docs = retriever.get_relevant_documents("what did he say about ketanji brown jackson")
 len(docs)
 ```
-
-
 
 ```text
 1

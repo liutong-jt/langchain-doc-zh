@@ -1,16 +1,16 @@
-# Contextual compression
+# Contextual compression 情境压缩
 
-One challenge with retrieval is that usually you don’t know the specific queries your document storage system will face when you ingest data into the system. This means that the information most relevant to a query may be buried in a document with a lot of irrelevant text. Passing that full document through your application can lead to more expensive LLM calls and poorer responses.
+一种挑战是，通常在将数据输入系统时，您不知道文档存储系统将面临的特定查询。这意味着与查询最相关的信息可能被包含大量不相关文本的文档所掩盖。将整个文档通过您的应用程序传递可能会导致更昂贵的LLM调用和较差的响应。
 
-Contextual compression is meant to fix this. The idea is simple: instead of immediately returning retrieved documents as-is, you can compress them using the context of the given query, so that only the relevant information is returned. “Compressing” here refers to both compressing the contents of an individual document and filtering out documents wholesale.
+情境压缩旨在解决此问题。这个想法很简单：不是立即按原样返回检索到的文档，而是使用给定查询的上下文压缩它们，以便只返回相关的信息。这里的“压缩”指的是同时压缩单个文档的内容和过滤掉文档。
 
-To use the Contextual Compression Retriever, you’ll need: - a base retriever - a Document Compressor
+要使用情境压缩检索器，您需要：- 基本检索器 - 文档压缩器
 
-The Contextual Compression Retriever passes queries to the base retriever, takes the initial documents and passes them through the Document Compressor. The Document Compressor takes a list of documents and shortens it by reducing the contents of documents or dropping documents altogether.
+情境压缩检索器将查询传递给基本检索器，获取初始文档并将它们通过文档压缩器。文档压缩器接受一个文档列表并将其缩短，方法是减少文档内容或完全删除文档。
 
-![img](https://drive.google.com/uc?id=1CtNgWODXZudxAWSRiWgSGEoTNrUFT98v.png)
+![img](../../../../contextual_compression.jpg)
 
-## Get started[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#get-started)
+## Get started
 
 ```python
 # Helper function for printing docs
@@ -26,9 +26,9 @@ def pretty_print_docs(docs):
 
 
 
-## Using a vanilla vector store retriever[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#using-a-vanilla-vector-store-retriever)
+## Using a vanilla vector store retriever
 
-Let’s start by initializing a simple vector store retriever and storing the 2023 State of the Union speech (in chunks). We can see that given an example question our retriever returns one or two relevant docs and a few irrelevant docs. And even the relevant docs have a lot of irrelevant information in them.
+让我们首先初始化一个简单的向量存储检索器，并存储2023年国情咨文（分块存储）。我们可以看到，对于给定的一个示例问题，我们的检索器会返回一到两个相关的文档和几个不相关的文档。即使相关文档中也包含大量不相关的信息。
 
 ```python
 from langchain.text_splitter import CharacterTextSplitter
@@ -50,68 +50,68 @@ pretty_print_docs(docs)
 
 
 ```text
-Document 1:
+文档1：
 
-Tonight. I call on the Senate to: Pass the Freedom to Vote Act. Pass the John Lewis Voting Rights Act. And while you’re at it, pass the Disclose Act so Americans can know who is funding our elections. 
+今晚，我呼吁参议院：通过《自由投票法案》；通过《约翰·刘易斯投票权法案》；同时，通过《披露法案》，让美国人知道谁在资助我们的选举。
 
-Tonight, I’d like to honor someone who has dedicated his life to serve this country: Justice Stephen Breyer—an Army veteran, Constitutional scholar, and retiring Justice of the United States Supreme Court. Justice Breyer, thank you for your service. 
+今晚，我想向一位为国家服务一生的人致敬：斯蒂芬·布雷耶法官——一名陆军退伍军人、宪法学者和即将退休的美国最高法院大法官。布雷耶法官，感谢您的服务。
 
-One of the most serious constitutional responsibilities a President has is nominating someone to serve on the United States Supreme Court. 
+总统的最严重的宪法责任之一是提名某人担任美国最高法院法官。
 
-And I did that 4 days ago, when I nominated Circuit Court of Appeals Judge Ketanji Brown Jackson. One of our nation’s top legal minds, who will continue Justice Breyer’s legacy of excellence.
-----------------------------------------------------------------------------------------------------
-Document 2:
+我在4天前就做到了，当时我提名了巡回上诉法院法官凯坦吉·布朗·杰克逊。她是我国最优秀的法律人才之一，将继续布雷耶法官的卓越传统。
 
-A former top litigator in private practice. A former federal public defender. And from a family of public school educators and police officers. A consensus builder. Since she’s been nominated, she’s received a broad range of support—from the Fraternal Order of Police to former judges appointed by Democrats and Republicans. 
+文档2：
 
-And if we are to advance liberty and justice, we need to secure the Border and fix the immigration system. 
+曾任私人执业的顶级诉讼律师。曾任联邦公设辩护人。来自一个由公立学校教育工作者和警察组成的家庭。是一名共识建设者。自从她被提名以来，她得到了广泛的支持——从警察兄弟会到民主党人和共和党人任命的前法官。
 
-We can do both. At our border, we’ve installed new technology like cutting-edge scanners to better detect drug smuggling.  
+如果我们想要推进自由和正义，我们需要保障边境安全并修复移民系统。
 
-We’ve set up joint patrols with Mexico and Guatemala to catch more human traffickers.  
+我们可以做到这两点。在边境，我们已经安装了新技术，如先进的扫描仪，以更好地检测毒品走私。
 
-We’re putting in place dedicated immigration judges so families fleeing persecution and violence can have their cases heard faster. 
+我们与墨西哥和危地马拉设立了联合巡逻队，以抓获更多的人口贩运者。
 
-We’re securing commitments and supporting partners in South and Central America to host more refugees and secure their own borders.
-----------------------------------------------------------------------------------------------------
-Document 3:
+我们正在建立专门的移民法官，以便因受迫害和暴力而逃离的家庭能够更快地审理案件。
 
-And for our LGBTQ+ Americans, let’s finally get the bipartisan Equality Act to my desk. The onslaught of state laws targeting transgender Americans and their families is wrong. 
+我们正在争取承诺并支持南美和中美洲的合作伙伴，以接纳更多难民并保障他们自己的边境安全。
 
-As I said last year, especially to our younger transgender Americans, I will always have your back as your President, so you can be yourself and reach your God-given potential. 
+文档3：
 
-While it often appears that we never agree, that isn’t true. I signed 80 bipartisan bills into law last year. From preventing government shutdowns to protecting Asian-Americans from still-too-common hate crimes to reforming military justice. 
+对于我们的LGBTQ+美国人，让我们最终将《两党平等法案》送到我的办公桌上。针对跨性别美国人及其家庭的州法律泛滥是错误的。
 
-And soon, we’ll strengthen the Violence Against Women Act that I first wrote three decades ago. It is important for us to show the nation that we can come together and do big things. 
+正如我在去年所说，尤其是对我们年轻的跨性别美国人，作为总统，我将始终支持你，让你做自己，发挥上天赋予你的潜力。
 
-So tonight I’m offering a Unity Agenda for the Nation. Four big things we can do together.  
+虽然似乎我们从未达成一致，但事实并非如此。去年我签署了80项两党法案成为法律。从防止政府停摆，到保护亚裔美国人免受仍太常见的仇恨犯罪，到改革军事司法。
 
-First, beat the opioid epidemic.
-----------------------------------------------------------------------------------------------------
-Document 4:
+很快，我们将加强我30年前首次撰写的《反对暴力侵害妇女法》。对我们来说，展现出我们能够团结一致并做大事是很重要的。
 
-Tonight, I’m announcing a crackdown on these companies overcharging American businesses and consumers. 
+因此，今晚我将提出国家团结议程。我们可以一起做的四件大事。
 
-And as Wall Street firms take over more nursing homes, quality in those homes has gone down and costs have gone up.  
+首先，战胜阿片类药物成瘾。
 
-That ends on my watch. 
+文档4：
 
-Medicare is going to set higher standards for nursing homes and make sure your loved ones get the care they deserve and expect. 
+今晚，我将宣布打击这些公司向美国企业和消费者收取过高费用的行动。
 
-We’ll also cut costs and keep the economy going strong by giving workers a fair shot, provide more training and apprenticeships, hire them based on their skills not degrees. 
+随着华尔街公司接管更多的养老院，这些养老院的质量下降，成本上升。
 
-Let’s pass the Paycheck Fairness Act and paid leave.  
+在我的任期内，这种现象将结束。
 
-Raise the minimum wage to $15 an hour and extend the Child Tax Credit, so no one has to raise a family in poverty. 
+医疗保险将为养老院设定更高的标准，确保您的亲人得到应有的照顾。
 
-Let’s increase Pell Grants and increase our historic support of HBCUs, and invest in what Jill—our First Lady who teaches full-time—calls America’s best-kept secret: community colleges.
+我们还将通过提高工人的待遇、提供更多的培训和学徒制、根据技能而非学位雇用来降低成本并保持经济强劲发展。
+
+让我们通过《工资公平法》和带薪休假。
+
+将最低工资提高到每小时15美元，并延长儿童税收抵免，以便没有人必须在贫困中抚养家庭。
+
+让我们增加佩尔奖学金，并增加对我们历史上对HBCUs的支持，并投资于我们第一夫人吉尔（她全职教书）所说的美国最好的秘密：社区学院。
 ```
 
 
 
-## Adding contextual compression with an `LLMChainExtractor`[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#adding-contextual-compression-with-an-llmchainextractor)
+## Adding contextual compression with an `LLMChainExtractor`
 
-Now let’s wrap our base retriever with a `ContextualCompressionRetriever`. We’ll add an `LLMChainExtractor`, which will iterate over the initially returned documents and extract from each only the content that is relevant to the query.
+现在让我们用`ContextualCompressionRetriever`来包装我们的基础检索器。我们将添加一个`LLMChainExtractor`，它将遍历最初返回的文档，并从每个文档中提取与查询相关的仅内容。
 
 ```python
 from langchain.retrievers import ContextualCompressionRetriever
@@ -153,11 +153,11 @@ I did that 4 days ago, when I nominated Circuit Court of Appeals Judge Ketanji B
 
 
 
-## More built-in compressors: filters[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#more-built-in-compressors-filters)
+## More built-in compressors: filters
 
-### `LLMChainFilter`[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#llmchainfilter)
+### `LLMChainFilter`
 
-The `LLMChainFilter` is slightly simpler but more robust compressor that uses an LLM chain to decide which of the initially retrieved documents to filter out and which ones to return, without manipulating the document contents.
+`LLMChainFilter`是一个略微简单但更健壮的压缩器，它使用LLM链来决定从初始检索出的文档中过滤掉哪些，返回哪些，而不操作文档内容。
 
 ```python
 from langchain.retrievers.document_compressors import LLMChainFilter
@@ -202,9 +202,9 @@ And I did that 4 days ago, when I nominated Circuit Court of Appeals Judge Ketan
 
 
 
-### `EmbeddingsFilter`[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#embeddingsfilter)
+### `EmbeddingsFilter`
 
-Making an extra LLM call over each retrieved document is expensive and slow. The `EmbeddingsFilter` provides a cheaper and faster option by embedding the documents and query and only returning those documents which have sufficiently similar embeddings to the query.
+添加针对每个检索到的文档的额外LLM调用是昂贵且耗时的。`EmbeddingsFilter`通过将文档和查询嵌入其中，并仅返回与查询具有足够相似嵌入的文档，提供了一个更便宜、更快的选择。
 
 ```python
 from langchain.retrievers.document_compressors import EmbeddingsFilter
@@ -266,11 +266,11 @@ First, beat the opioid epidemic.
 
 
 
-## Stringing compressors and document transformers together[](https://python.langchain.com/docs/modules/data_connection/retrievers/contextual_compression#stringing-compressors-and-document-transformers-together)
+## Stringing compressors and document transformers together
 
-Using the `DocumentCompressorPipeline` we can also easily combine multiple compressors in sequence. Along with compressors we can add `BaseDocumentTransformer`s to our pipeline, which don’t perform any contextual compression but simply perform some transformation on a set of documents. For example `TextSplitter`s can be used as document transformers to split documents into smaller pieces, and the `EmbeddingsRedundantFilter` can be used to filter out redundant documents based on embedding similarity between documents.
+使用`DocumentCompressorPipeline`，我们也可以轻松地按顺序组合多个压缩器。除了压缩器，我们还可以在管道中添加`BaseDocumentTransformer`，这些转换器不会执行任何上下文压缩，而只是对一组文档执行一些转换。例如，可以使用`TextSplitter`作为文档转换器将文档拆分为较小的片段，而`EmbeddingsRedundantFilter`可以用于根据文档之间的嵌入相似性过滤掉冗余文档。
 
-Below we create a compressor pipeline by first splitting our docs into smaller chunks, then removing redundant documents, and then filtering based on relevance to the query.
+以下是我们首先将文档拆分为较小的片段，然后删除冗余文档，然后根据查询的相关性进行过滤的压缩器管道的创建方法。
 
 ```python
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
@@ -325,8 +325,3 @@ And if we are to advance liberty and justice, we need to secure the Border and f
 
 We can do both
 ```
-
-
-
-[
-  ](https://python.langchain.com/docs/modules/data_connection/retrievers/MultiQueryRetriever)

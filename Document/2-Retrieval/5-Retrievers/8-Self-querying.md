@@ -1,22 +1,20 @@
 # Self-querying
 
-Head to [Integrations](https://python.langchain.com/docs/integrations/retrievers/self_query) for documentation on vector stores with built-in support for self-querying.
+前往[Integrations](https://python.langchain.com/docs/integrations/retrievers/self_query)获取关于内置自我查询支持的向量存储的文档。
 
-A self-querying retriever is one that, as the name suggests, has the ability to query itself. Specifically, given any natural language query, the retriever uses a query-constructing LLM chain to write a structured query and then applies that structured query to its underlying VectorStore. This allows the retriever to not only use the user-input query for semantic similarity comparison with the contents of stored documents but to also extract filters from the user query on the metadata of stored documents and to execute those filters.
+正如名称所示，自我查询检索器是一种具有查询自身能力的检索器。具体来说，给定任何自然语言查询，检索器使用查询构建LLM链来编写结构化查询，然后将该结构化查询应用于其底层的VectorStore。这使得检索器不仅可以使用用户输入的查询与存储文档的内容进行语义相似性比较，还可以从用户查询中提取存储文档元数据的过滤器，并执行这些过滤器。
 
 ![img](https://drive.google.com/uc?id=1OQUN-0MJcDUxmPXofgS7MqReEs720pqS.png)
 
-## Get started[](https://python.langchain.com/docs/modules/data_connection/retrievers/self_query#get-started)
+## Get started
 
-For demonstration purposes we’ll use a `Chroma` vector store. We’ve created a small demo set of documents that contain summaries of movies.
+为了演示目的，我们将使用`Chroma`向量存储。我们创建了一小批文档演示集，其中包含电影摘要。 
 
-**Note:** The self-query retriever requires you to have `lark` package installed.
+**注意：** 自我查询检索器需要您安装`lark`包。
 
 ```python
 %pip install --upgrade --quiet  lark chromadb
 ```
-
-
 
 ```python
 from langchain.schema import Document
@@ -25,30 +23,30 @@ from langchain_openai import OpenAIEmbeddings
 
 docs = [
     Document(
-        page_content="A bunch of scientists bring back dinosaurs and mayhem breaks loose",
+        page_content="一群科学家带回了恐龙，然后混乱爆发了",
         metadata={"year": 1993, "rating": 7.7, "genre": "science fiction"},
     ),
     Document(
-        page_content="Leo DiCaprio gets lost in a dream within a dream within a dream within a ...",
-        metadata={"year": 2010, "director": "Christopher Nolan", "rating": 8.2},
+        page_content="莱昂纳多·迪卡普里奥在一个又一个梦境中迷失了自我……",
+        metadata={"year": 2010, "director": "克里斯托弗·诺兰", "rating": 8.2},
     ),
     Document(
-        page_content="A psychologist / detective gets lost in a series of dreams within dreams within dreams and Inception reused the idea",
-        metadata={"year": 2006, "director": "Satoshi Kon", "rating": 8.6},
+        page_content="一个心理学家/侦探在一个又一个的梦中迷失了方向，而《盗梦空间》重新使用了这个想法。",
+        metadata={"year": 2006, "director": "宫崎骏", "rating": 8.6},
     ),
     Document(
-        page_content="A bunch of normal-sized women are supremely wholesome and some men pine after them",
-        metadata={"year": 2019, "director": "Greta Gerwig", "rating": 8.3},
+        page_content="一群正常体型的女性非常纯真，有些男性会对她们念念不忘。",
+        metadata={"year": 2019, "director": "格蕾塔·葛韦格", "rating": 8.3},
     ),
     Document(
-        page_content="Toys come alive and have a blast doing so",
+        page_content="玩具变得活灵活现，玩得不亦乐乎。",
         metadata={"year": 1995, "genre": "animated"},
     ),
     Document(
-        page_content="Three men walk into the Zone, three men walk out of the Zone",
+        page_content="三名男子走进区域，三名男子走出区域。",
         metadata={
             "year": 1979,
-            "director": "Andrei Tarkovsky",
+            "director": "安德烈·塔可夫斯基",
             "genre": "thriller",
             "rating": 9.9,
         },
@@ -57,37 +55,30 @@ docs = [
 vectorstore = Chroma.from_documents(docs, OpenAIEmbeddings())
 ```
 
+### Creating our self-querying retriever
 
-
-### Creating our self-querying retriever[](https://python.langchain.com/docs/modules/data_connection/retrievers/self_query#creating-our-self-querying-retriever)
-
-Now we can instantiate our retriever. To do this we’ll need to provide some information upfront about the metadata fields that our documents support and a short description of the document contents.
+现在我们可以实例化我们的检索器。为此，我们需要提前提供一些关于我们的文档支持的元数据字段和文档内容的简短描述的信息。
 
 ```python
 from langchain.chains.query_constructor.base import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_openai import ChatOpenAI
 
-metadata_field_info = [
-    AttributeInfo(
-        name="genre",
-        description="The genre of the movie. One of ['science fiction', 'comedy', 'drama', 'thriller', 'romance', 'action', 'animated']",
-        type="string",
-    ),
-    AttributeInfo(
-        name="year",
-        description="The year the movie was released",
-        type="integer",
-    ),
-    AttributeInfo(
-        name="director",
-        description="The name of the movie director",
-        type="string",
-    ),
-    AttributeInfo(
-        name="rating", description="A 1-10 rating for the movie", type="float"
-    ),
+metadata_field_info = [ 
+    AttributeInfo( name="genre", 
+                  description="电影的类型。可以是 ['science fiction', 'comedy', 'drama', 'thriller', 'romance', 'action', 'animated'] 中的一个", 
+                  type="string", ), 
+    AttributeInfo( name="year", 
+                  description="电影发行的年份", 
+                  type="integer", ), 
+    AttributeInfo( name="director", 
+                  description="电影导演的名字", 
+                  type="string", ), 
+    AttributeInfo( name="rating", 
+                  description="电影的1-10评分", 
+                  type="float" ), 
 ]
+
 document_content_description = "Brief summary of a movie"
 llm = ChatOpenAI(temperature=0)
 retriever = SelfQueryRetriever.from_llm(
@@ -98,9 +89,7 @@ retriever = SelfQueryRetriever.from_llm(
 )
 ```
 
-
-
-### Testing it out[](https://python.langchain.com/docs/modules/data_connection/retrievers/self_query#testing-it-out)
+### Testing it out
 
 And now we can actually try using our retriever!
 
@@ -109,62 +98,46 @@ And now we can actually try using our retriever!
 retriever.invoke("I want to watch a movie rated higher than 8.5")
 ```
 
-
-
 ```text
-[Document(page_content='Three men walk into the Zone, three men walk out of the Zone', metadata={'director': 'Andrei Tarkovsky', 'genre': 'thriller', 'rating': 9.9, 'year': 1979}),
+[Document(page_content='三名男子走进区域，三名男子走出区域。', metadata={'director': 'Andrei Tarkovsky', 'genre': 'thriller', 'rating': 9.9, 'year': 1979}),
  Document(page_content='A psychologist / detective gets lost in a series of dreams within dreams within dreams and Inception reused the idea', metadata={'director': 'Satoshi Kon', 'rating': 8.6, 'year': 2006})]
 ```
 
-
-
 ```python
 # This example specifies a query and a filter
-retriever.invoke("Has Greta Gerwig directed any movies about women")
+retriever.invoke("格蕾塔·葛韦格有没有执导过关于女性的电影")
 ```
-
-
 
 ```text
-[Document(page_content='A bunch of normal-sized women are supremely wholesome and some men pine after them', metadata={'director': 'Greta Gerwig', 'rating': 8.3, 'year': 2019})]
+[Document(page_content='一群正常体型的女性非常纯真，有些男性会对她们念念不忘。', metadata={'director': 'Greta Gerwig', 'rating': 8.3, 'year': 2019})]
 ```
-
-
 
 ```python
 # This example specifies a composite filter
 retriever.invoke("What's a highly rated (above 8.5) science fiction film?")
 ```
 
-
-
 ```text
-[Document(page_content='A psychologist / detective gets lost in a series of dreams within dreams within dreams and Inception reused the idea', metadata={'director': 'Satoshi Kon', 'rating': 8.6, 'year': 2006}),
+[Document(page_content='一个心理学家/侦探在一个又一个的梦中迷失了方向，而《盗梦空间》重新使用了这个想法。', metadata={'director': 'Satoshi Kon', 'rating': 8.6, 'year': 2006}),
  Document(page_content='Three men walk into the Zone, three men walk out of the Zone', metadata={'director': 'Andrei Tarkovsky', 'genre': 'thriller', 'rating': 9.9, 'year': 1979})]
 ```
-
-
 
 ```python
 # This example specifies a query and composite filter
 retriever.invoke(
-    "What's a movie after 1990 but before 2005 that's all about toys, and preferably is animated"
+    "请问有没有一部1990年以后、2005年以前上映的关于玩具的电影，最好是动画片？"
 )
 ```
-
-
 
 ```text
 [Document(page_content='Toys come alive and have a blast doing so', metadata={'genre': 'animated', 'year': 1995})]
 ```
 
+### Filter k
 
+我们也可以使用self查询检索器来指定`k`：要获取的文档数量。
 
-### Filter k[](https://python.langchain.com/docs/modules/data_connection/retrievers/self_query#filter-k)
-
-We can also use the self query retriever to specify `k`: the number of documents to fetch.
-
-We can do this by passing `enable_limit=True` to the constructor.
+我们可以通过在构造函数中传递`enable_limit=True`来实现这一点。
 
 ```python
 retriever = SelfQueryRetriever.from_llm(
@@ -188,11 +161,11 @@ retriever.invoke("What are two movies about dinosaurs")
 
 
 
-## Constructing from scratch with LCEL[](https://python.langchain.com/docs/modules/data_connection/retrievers/self_query#constructing-from-scratch-with-lcel)
+## Constructing from scratch with LCEL
 
-To see what’s going on under the hood, and to have more custom control, we can reconstruct our retriever from scratch.
+为了了解检索器的工作原理，并且有更多的自定义控制，我们可以从头开始重新构建检索器。
 
-First, we need to create a query-construction chain. This chain will take a user query and generated a `StructuredQuery` object which captures the filters specified by the user. We provide some helper functions for creating a prompt and output parser. These have a number of tunable params that we’ll ignore here for simplicity.
+首先，我们需要创建一个查询构造链。这个链将接受用户查询，并生成一个`StructuredQuery`对象，该对象捕获了用户指定的过滤器。我们提供了一些用于创建提示和输出解析器的辅助函数。这些函数有许多可调参数，但我们在这里为了简单起见将忽略它们。
 
 ```python
 from langchain.chains.query_constructor.base import (
@@ -369,11 +342,9 @@ query_constructor.invoke(
 StructuredQuery(query='taxi driver', filter=Operation(operator=<Operator.AND: 'and'>, arguments=[Comparison(comparator=<Comparator.EQ: 'eq'>, attribute='genre', value='science fiction'), Operation(operator=<Operator.AND: 'and'>, arguments=[Comparison(comparator=<Comparator.GTE: 'gte'>, attribute='year', value=1990), Comparison(comparator=<Comparator.LT: 'lt'>, attribute='year', value=2000)]), Comparison(comparator=<Comparator.EQ: 'eq'>, attribute='director', value='Luc Besson')]), limit=None)
 ```
 
+查询构造器是自我查询检索器的关键元素。要构建一个好的检索系统，您需要确保您的查询构造器运行良好。这通常需要调整提示、提示中的示例、属性描述等。要查看有关如何在一些酒店库存数据上细化查询构造器的示例，请[查看此食谱](https://github.com/langchain-ai/langchain/blob/master/cookbook/self_query_hotel_search.ipynb)。
 
-
-The query constructor is the key element of the self-query retriever. To make a great retrieval system you’ll need to make sure your query constructor works well. Often this requires adjusting the prompt, the examples in the prompt, the attribute descriptions, etc. For an example that walks through refining a query constructor on some hotel inventory data, [check out this cookbook](https://github.com/langchain-ai/langchain/blob/master/cookbook/self_query_hotel_search.ipynb).
-
-The next key element is the structured query translator. This is the object responsible for translating the generic `StructuredQuery` object into a metadata filter in the syntax of the vector store you’re using. LangChain comes with a number of built-in translators. To see them all head to the [Integrations section](https://python.langchain.com/docs/integrations/retrievers/self_query).
+下一个关键元素是结构化查询翻译器。这是负责将通用`StructuredQuery`对象转换为您正在使用的向量存储的元数据过滤器的语法的对象。LangChain附带了许多内置翻译器。要查看它们，请转到[Integrations部分](https://python.langchain.com/docs/integrations/retrievers/self_query)。
 
 ```python
 from langchain.retrievers.self_query.chroma import ChromaTranslator

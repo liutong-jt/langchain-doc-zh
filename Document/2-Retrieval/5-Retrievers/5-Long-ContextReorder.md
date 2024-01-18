@@ -1,14 +1,12 @@
 # Long-Context Reorder
 
-No matter the architecture of your model, there is a substantial performance degradation when you include 10+ retrieved documents. In brief: When models must access relevant information in the middle of long contexts, they tend to ignore the provided documents. See: https://arxiv.org/abs/2307.03172
+无论您的模型架构如何，当您包含10+个检索到的文档时，都会出现明显的性能下降。简而言之：当模型必须在长上下文中访问相关信息时，它们往往会忽略提供的文档。请参阅：https://arxiv.org/abs/2307.03172
 
-To avoid this issue you can re-order documents after retrieval to avoid performance degradation.
+为避免此问题，您可以在检索后重新排列文档以避免性能下降。
 
 ```python
 %pip install --upgrade --quiet  sentence-transformers > /dev/null
 ```
-
-
 
 ```python
 from langchain.chains import LLMChain, StuffDocumentsChain

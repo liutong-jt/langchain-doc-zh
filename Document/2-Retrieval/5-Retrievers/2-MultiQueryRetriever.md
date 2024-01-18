@@ -39,8 +39,6 @@ retriever_from_llm = MultiQueryRetriever.from_llm(
 )
 ```
 
-
-
 ```python
 # Set logging for the queries
 import logging
@@ -49,26 +47,18 @@ logging.basicConfig()
 logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
 ```
 
-
-
 ```python
 unique_docs = retriever_from_llm.get_relevant_documents(query=question)
 len(unique_docs)
 ```
 
-
-
 ```text
 INFO:langchain.retrievers.multi_query:Generated queries: ['1. How can Task Decomposition be approached?', '2. What are the different methods for Task Decomposition?', '3. What are the various approaches to decomposing tasks?']
 ```
 
-
-
 ```text
 5
 ```
-
-
 
 #### 提供自己的提示
 
@@ -133,13 +123,9 @@ unique_docs = retriever.get_relevant_documents(
 len(unique_docs)
 ```
 
-
-
 ```text
 INFO:langchain.retrievers.multi_query:Generated queries: ["1. What is the course's perspective on regression?", '2. Can you provide information on regression as discussed in the course?', '3. How does the course cover the topic of regression?', "4. What are the course's teachings on regression?", '5. In relation to the course, what is mentioned about regression?']
 ```
-
-
 
 ```text
 11

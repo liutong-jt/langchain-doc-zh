@@ -1,16 +1,14 @@
 # Time-weighted vector store retriever
 
-This retriever uses a combination of semantic similarity and a time decay.
+这个检索器使用了语义相似性和时间衰减的组合。 
 
-The algorithm for scoring them is:
+对它们进行评分的算法是：
 
 ```text
 semantic_similarity + (1.0 - decay_rate) ^ hours_passed
 ```
 
-
-
-Notably, `hours_passed` refers to the hours passed since the object in the retriever **was last accessed**, not since it was created. This means that frequently accessed objects remain “fresh”.
+值得注意的是，`hours_passed`指的是检索器中对象上次被访问以来经过的小时数，而不是自创建以来的小时数。这意味着频繁访问的对象会保持“新鲜”。
 
 ```python
 from datetime import datetime, timedelta
@@ -23,11 +21,9 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 ```
 
-
-
 ## Low decay rate
 
-A low `decay rate` (in this, to be extreme, we will set it close to 0) means memories will be “remembered” for longer. A `decay rate` of 0 means memories never be forgotten, making this retriever equivalent to the vector lookup.
+一个低`衰减率`（在这里，为了达到极致，我们将它设置接近0）意味着记忆将会被“记住”更长时间。`衰减率`为0意味着记忆永远不会被遗忘，使得这个检索器等同于向量查找。
 
 ```python
 # Define your embedding model
@@ -41,8 +37,6 @@ retriever = TimeWeightedVectorStoreRetriever(
 )
 ```
 
-
-
 ```python
 yesterday = datetime.now() - timedelta(days=1)
 retriever.add_documents(
@@ -51,20 +45,14 @@ retriever.add_documents(
 retriever.add_documents([Document(page_content="hello foo")])
 ```
 
-
-
 ```text
 ['c3dcf671-3c0a-4273-9334-c4a913076bfa']
 ```
-
-
 
 ```python
 # "Hello World" is returned first because it is most salient, and the decay rate is close to 0., meaning it's still recent enough
 retriever.get_relevant_documents("hello world")
 ```
-
-
 
 ```text
 [Document(page_content='hello world', metadata={'last_accessed_at': datetime.datetime(2023, 12, 27, 15, 30, 18, 457125), 'created_at': datetime.datetime(2023, 12, 27, 15, 30, 8, 442662), 'buffer_idx': 0})]
@@ -74,7 +62,7 @@ retriever.get_relevant_documents("hello world")
 
 ## High decay rate
 
-With a high `decay rate` (e.g., several 9’s), the `recency score` quickly goes to 0! If you set this all the way to 1, `recency` is 0 for all objects, once again making this equivalent to a vector lookup.
+具有高`衰减率`（例如，多个9）的`最近度分数`会迅速变为0！如果您将此设置为1，则所有对象的`最近度`均为0，再次使其等效于向量查找。
 
 ```python
 # Define your embedding model
@@ -88,8 +76,6 @@ retriever = TimeWeightedVectorStoreRetriever(
 )
 ```
 
-
-
 ```python
 yesterday = datetime.now() - timedelta(days=1)
 retriever.add_documents(
@@ -98,30 +84,22 @@ retriever.add_documents(
 retriever.add_documents([Document(page_content="hello foo")])
 ```
 
-
-
 ```text
 ['eb1c4c86-01a8-40e3-8393-9a927295a950']
 ```
-
-
 
 ```python
 # "Hello Foo" is returned first because "hello world" is mostly forgotten
 retriever.get_relevant_documents("hello world")
 ```
 
-
-
 ```text
 [Document(page_content='hello foo', metadata={'last_accessed_at': datetime.datetime(2023, 12, 27, 15, 30, 50, 57185), 'created_at': datetime.datetime(2023, 12, 27, 15, 30, 44, 720490), 'buffer_idx': 1})]
 ```
 
-
-
 ## Virtual time
 
-Using some utils in LangChain, you can mock out the time component.
+使用LangChain中的一些工具，你可以模拟时间组件。
 
 ```python
 import datetime
@@ -129,19 +107,12 @@ import datetime
 from langchain.utils import mock_now
 ```
 
-
-
 ```python
 # Notice the last access time is that date time
 with mock_now(datetime.datetime(2024, 2, 3, 10, 11)):
     print(retriever.get_relevant_documents("hello world"))
 ```
 
-
-
 ```text
 [Document(page_content='hello world', metadata={'last_accessed_at': MockDateTime(2024, 2, 3, 10, 11), 'created_at': datetime.datetime(2023, 12, 27, 15, 30, 44, 532941), 'buffer_idx': 0})]
 ```
-
-
-

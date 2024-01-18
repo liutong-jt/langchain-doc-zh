@@ -1,24 +1,20 @@
 # Ensemble Retriever
 
-The `EnsembleRetriever` takes a list of retrievers as input and ensemble the results of their `get_relevant_documents()` methods and rerank the results based on the [Reciprocal Rank Fusion](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) algorithm.
+`EnsembleRetriever` 输入是一个检索器列表，它将这些检索器的 `get_relevant_documents()` 方法的结果进行整合，并根据 [Reciprocal Rank Fusion](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) 算法对结果进行重新排序。
 
-By leveraging the strengths of different algorithms, the `EnsembleRetriever` can achieve better performance than any single algorithm.
+通过利用不同算法的优点，`EnsembleRetriever` 可以获得比任何单一算法更好的性能。
 
-The most common pattern is to combine a sparse retriever (like BM25) with a dense retriever (like embedding similarity), because their strengths are complementary. It is also known as “hybrid search”. The sparse retriever is good at finding relevant documents based on keywords, while the dense retriever is good at finding relevant documents based on semantic similarity.
+最常见的模式是将稀疏检索器（如 BM25）与密集检索器（如嵌入相似性）结合在一起，因为它们的优点是互补的。这也被称为“混合搜索”。稀疏检索器擅长根据关键词找到相关文档，而密集检索器擅长根据语义相似性找到相关文档。
 
 ```python
 %pip install --upgrade --quiet  rank_bm25 > /dev/null
 ```
-
-
 
 ```python
 from langchain.retrievers import BM25Retriever, EnsembleRetriever
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 ```
-
-
 
 ```python
 doc_list_1 = [
@@ -50,14 +46,10 @@ ensemble_retriever = EnsembleRetriever(
 )
 ```
 
-
-
 ```python
 docs = ensemble_retriever.invoke("apples")
 docs
 ```
-
-
 
 ```text
 [Document(page_content='You like apples', metadata={'source': 2}),
@@ -66,9 +58,7 @@ docs
  Document(page_content='Apples and oranges are fruits', metadata={'source': 1})]
 ```
 
-
-
-## Runtime Configuration[](https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble#runtime-configuration)
+## Runtime Configuration
 
 We can also configure the retrievers at runtime. In order to do this, we need to mark the fields as configurable
 

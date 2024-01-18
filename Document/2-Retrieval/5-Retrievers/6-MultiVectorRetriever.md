@@ -1,20 +1,18 @@
 # MultiVector Retriever
 
-It can often be beneficial to store multiple vectors per document. There are multiple use cases where this is beneficial. LangChain has a base `MultiVectorRetriever` which makes querying this type of setup easy. A lot of the complexity lies in how to create the multiple vectors per document. This notebook covers some of the common ways to create those vectors and use the `MultiVectorRetriever`.
+存储每个文档中的多个向量通常是有益的。这在多个用例中都是有益的。LangChain有一个基本的`MultiVectorRetriever`，可以轻松查询此类设置。很多复杂性在于如何为每个文档创建多个向量。这个笔记本介绍了一些创建这些向量并使用`MultiVectorRetriever`的常用方法。
 
-The methods to create multiple vectors per document include:
+为每个文档创建多个向量的方法包括：
 
-- Smaller chunks: split a document into smaller chunks, and embed those (this is ParentDocumentRetriever).
-- Summary: create a summary for each document, embed that along with (or instead of) the document.
-- Hypothetical questions: create hypothetical questions that each document would be appropriate to answer, embed those along with (or instead of) the document.
+- 较小的片段：将文档拆分为较小的片段，并嵌入这些片段（这是ParentDocumentRetriever）。
+- 摘要：为每个文档创建一个摘要，与（或代替）文档一起嵌入。
+- 假设性问题：为每个文档创建假设性问题，每个文档都适合回答，与（或代替）文档一起嵌入。
 
-Note that this also enables another method of adding embeddings - manually. This is great because you can explicitly add questions or queries that should lead to a document being recovered, giving you more control.
+请注意，这还启用了一种添加嵌入的另一种方法 - 手动。这很好，因为您可以显式添加应导致恢复文档的问题或查询，从而为您提供更多控制。
 
 ```python
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 ```
-
-
 
 ```python
 from langchain.storage import InMemoryByteStore
@@ -23,8 +21,6 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 ```
-
-
 
 ```python
 loaders = [
@@ -38,11 +34,9 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000)
 docs = text_splitter.split_documents(docs)
 ```
 
+## Smaller chunks
 
-
-## Smaller chunks[](https://python.langchain.com/docs/modules/data_connection/retrievers/multi_vector#smaller-chunks)
-
-Often times it can be useful to retrieve larger chunks of information, but embed smaller chunks. This allows for embeddings to capture the semantic meaning as closely as possible, but for as much context as possible to be passed downstream. Note that this is what the `ParentDocumentRetriever` does. Here we show what is going on under the hood.
+很多时候，检索大量信息并嵌入小块信息可能会很有用。这使得嵌入可以尽可能紧密地捕获语义含义，但尽可能多地将上下文传递到下游。请注意，这就是`ParentDocumentRetriever`所做的。这里我们展示了幕后发生的情况。
 
 ```python
 # The vectorstore to use to index the child chunks
@@ -63,14 +57,10 @@ import uuid
 doc_ids = [str(uuid.uuid4()) for _ in docs]
 ```
 
-
-
 ```python
 # The splitter to use to create smaller chunks
 child_text_splitter = RecursiveCharacterTextSplitter(chunk_size=400)
 ```
-
-
 
 ```python
 sub_docs = []
@@ -102,22 +92,16 @@ retriever.vectorstore.similarity_search("justice breyer")[0]
 Document(page_content='Tonight, I’d like to honor someone who has dedicated his life to serve this country: Justice Stephen Breyer—an Army veteran, Constitutional scholar, and retiring Justice of the United States Supreme Court. Justice Breyer, thank you for your service. \n\nOne of the most serious constitutional responsibilities a President has is nominating someone to serve on the United States Supreme Court.', metadata={'doc_id': '2fd77862-9ed5-4fad-bf76-e487b747b333', 'source': '../../state_of_the_union.txt'})
 ```
 
-
-
 ```python
 # Retriever returns larger chunks
 len(retriever.get_relevant_documents("justice breyer")[0].page_content)
 ```
 
-
-
 ```text
 9875
 ```
 
-
-
-The default search type the retriever performs on the vector database is a similarity search. LangChain Vector Stores also support searching via [Max Marginal Relevance](https://api.python.langchain.com/en/latest/vectorstores/langchain_core.vectorstores.VectorStore.html#langchain_core.vectorstores.VectorStore.max_marginal_relevance_search) so if you want this instead you can just set the `search_type` property as follows:
+翻译：检索器在向量数据库上执行的默认搜索类型是相似性搜索。LangChain 向量存储也支持通过 [最大边际相关性](https://api.python.langchain.com/en/latest/vectorstores/langchain_core.vectorstores.VectorStore.html#langchain_core.vectorstores.VectorStore.max_marginal_relevance_search) 进行搜索，因此如果您想要使用这种方式，只需将 `search_type` 属性设置为如下：
 
 ```python
 from langchain.retrievers.multi_vector import SearchType

@@ -1,19 +1,17 @@
 # Parent Document Retriever
 
-When splitting documents for retrieval, there are often conflicting desires:
+当拆分文件以进行检索时，通常存在冲突的需求：
 
-1. You may want to have small documents, so that their embeddings can most accurately reflect their meaning. If too long, then the embeddings can lose meaning.
-2. You want to have long enough documents that the context of each chunk is retained.
+1. 您可能希望拥有较小的文档，以便其嵌入内容最准确地反映其含义。如果太长，嵌入内容可能会失去意义。
+2. 您希望拥有足够长的文档，以便保留每个片段的上下文。
 
-The `ParentDocumentRetriever` strikes that balance by splitting and storing small chunks of data. During retrieval, it first fetches the small chunks but then looks up the parent ids for those chunks and returns those larger documents.
+`ParentDocumentRetriever`通过拆分和存储小数据块来实现这种平衡。在检索过程中，它首先获取小块，然后查找这些块的父级 ID，并返回这些较大的文档。
 
-Note that “parent document” refers to the document that a small chunk originated from. This can either be the whole raw document OR a larger chunk.
+请注意，“父级文档”指的是小块起源于的文档。这可以是整个原始文档，也可以是较大的块。
 
 ```python
 from langchain.retrievers import ParentDocumentRetriever
 ```
-
-
 
 ```python
 from langchain.storage import InMemoryStore
@@ -22,8 +20,6 @@ from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 ```
-
-
 
 ```python
 loaders = [
@@ -35,11 +31,9 @@ for loader in loaders:
     docs.extend(loader.load())
 ```
 
+## Retrieving full documents
 
-
-## Retrieving full documents[](https://python.langchain.com/docs/modules/data_connection/retrievers/parent_document_retriever#retrieving-full-documents)
-
-In this mode, we want to retrieve the full documents. Therefore, we only specify a child splitter.
+在此模式下，我们希望检索完整的文档。因此，我们只指定一个子拆分器。
 
 ```python
 # This text splitter is used to create the child documents
@@ -57,42 +51,30 @@ retriever = ParentDocumentRetriever(
 )
 ```
 
-
-
 ```python
 retriever.add_documents(docs, ids=None)
 ```
 
-
-
-This should yield two keys, because we added two documents.
+This should yield two keys，因为我们添加了两个文档。.
 
 ```python
 list(store.yield_keys())
 ```
-
-
 
 ```text
 ['cfdf4af7-51f2-4ea3-8166-5be208efa040',
  'bf213c21-cc66-4208-8a72-733d030187e6']
 ```
 
-
-
-Let’s now call the vector store search functionality - we should see that it returns small chunks (since we’re storing the small chunks).
+让我们现在调用向量存储搜索功能 - 我们应该看到它返回小块（因为我们正在存储小块）。
 
 ```python
 sub_docs = vectorstore.similarity_search("justice breyer")
 ```
 
-
-
 ```python
 print(sub_docs[0].page_content)
 ```
-
-
 
 ```text
 Tonight, I’d like to honor someone who has dedicated his life to serve this country: Justice Stephen Breyer—an Army veteran, Constitutional scholar, and retiring Justice of the United States Supreme Court. Justice Breyer, thank you for your service. 
@@ -100,31 +82,23 @@ Tonight, I’d like to honor someone who has dedicated his life to serve this co
 One of the most serious constitutional responsibilities a President has is nominating someone to serve on the United States Supreme Court.
 ```
 
-
-
-Let’s now retrieve from the overall retriever. This should return large documents - since it returns the documents where the smaller chunks are located.
+现在让我们从整体检索器中检索。这应该会返回大量的文档 - 因为它返回的是包含较小片段的文档。
 
 ```python
 retrieved_docs = retriever.get_relevant_documents("justice breyer")
 ```
 
-
-
 ```python
 len(retrieved_docs[0].page_content)
 ```
-
-
 
 ```text
 38540
 ```
 
+## Retrieving larger chunks
 
-
-## Retrieving larger chunks[](https://python.langchain.com/docs/modules/data_connection/retrievers/parent_document_retriever#retrieving-larger-chunks)
-
-Sometimes, the full documents can be too big to want to retrieve them as is. In that case, what we really want to do is to first split the raw documents into larger chunks, and then split it into smaller chunks. We then index the smaller chunks, but on retrieval we retrieve the larger chunks (but still not the full documents).
+有时，完整文档可能太大，以至于不希望按原样检索它们。在这种情况下，我们真正想做的是先将原始文档分割成较大的块，然后再将其分割成较小的块。然后我们对较小的块进行索引，但在检索时我们检索较大的块（但仍然不是完整的文档）。
 
 ```python
 # This text splitter is used to create the parent documents
@@ -140,8 +114,6 @@ vectorstore = Chroma(
 store = InMemoryStore()
 ```
 
-
-
 ```python
 retriever = ParentDocumentRetriever(
     vectorstore=vectorstore,
@@ -151,41 +123,29 @@ retriever = ParentDocumentRetriever(
 )
 ```
 
-
-
 ```python
 retriever.add_documents(docs)
 ```
 
-
-
-We can see that there are much more than two documents now - these are the larger chunks.
+我们可以看到，现在远不止两个文件 - 这些是较大的片段。
 
 ```python
 len(list(store.yield_keys()))
 ```
 
-
-
 ```text
 66
 ```
 
-
-
-Let’s make sure the underlying vector store still retrieves the small chunks.
+让我们确保底层的向量存储仍然可以检索到小块。
 
 ```python
 sub_docs = vectorstore.similarity_search("justice breyer")
 ```
 
-
-
 ```python
 print(sub_docs[0].page_content)
 ```
-
-
 
 ```text
 Tonight, I’d like to honor someone who has dedicated his life to serve this country: Justice Stephen Breyer—an Army veteran, Constitutional scholar, and retiring Justice of the United States Supreme Court. Justice Breyer, thank you for your service. 
@@ -193,31 +153,21 @@ Tonight, I’d like to honor someone who has dedicated his life to serve this co
 One of the most serious constitutional responsibilities a President has is nominating someone to serve on the United States Supreme Court.
 ```
 
-
-
 ```python
 retrieved_docs = retriever.get_relevant_documents("justice breyer")
 ```
-
-
 
 ```python
 len(retrieved_docs[0].page_content)
 ```
 
-
-
 ```text
 1849
 ```
 
-
-
 ```python
 print(retrieved_docs[0].page_content)
 ```
-
-
 
 ```text
 In state after state, new laws have been passed, not only to suppress the vote, but to subvert entire elections. 
@@ -244,8 +194,6 @@ We’re putting in place dedicated immigration judges so families fleeing persec
 
 We’re securing commitments and supporting partners in South and Central America to host more refugees and secure their own borders.
 ```
-
-
 
 [
   ](https://python.langchain.com/docs/modules/data_connection/retrievers/multi_vector)
